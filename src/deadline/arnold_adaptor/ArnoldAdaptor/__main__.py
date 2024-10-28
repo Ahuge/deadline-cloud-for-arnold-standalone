@@ -17,7 +17,7 @@ def main(reentry_exe: typing.Optional[pathlib.Path] = None) -> int:
     """
     Entry point for the arnold Adaptor
     """
-    _logger.info("About to start the arnoldAdaptor")
+    _logger.info("About to start the ArnoldAdaptor")
 
     package_name = vars(sys.modules[__name__])["__package__"]
     if not package_name:

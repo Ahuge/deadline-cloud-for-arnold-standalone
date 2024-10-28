@@ -1,6 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
-from .arnold_client import arnoldClient
-from .arnold_handler import arnoldHandler
+from .arnold_client import ArnoldClient
+from .arnold_handler import ArnoldHandler
 
-__all__ = ["arnoldClient", "arnoldHandler"]
+__all__ = ["ArnoldClient", "ArnoldHandler"]

@@ -2,21 +2,13 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
-        "camera": { "type": "string" },
-        "image_height": { "type": "number" },
-        "image_width": { "type": "number" },
         "output_file_path": { "type": "string" },
-        "output_file_prefix": { "type": "string" },
-        "project_path": { "type": "string" },
-        "render_layer": { "type": "string" },
-        "render_setup_include_lights": { "type": "boolean" },
         "scene_file": { "type": "string" },
-        "strict_error_checking": { "type": "boolean" }
+        "error_on_arnold_license_fail": { "type": "boolean" },
+        "strict_error_checking": { "type":  "boolean" }
     },
     "required": [
-        "project_path",
-        "render_layer",
-        "renderer",
+        "output_file_path",
         "scene_file"
     ]
 }
