@@ -22,19 +22,9 @@ parameterDefinitions:
   userInterface:
     control: LINE_EDIT
     label: Frames
-    groupLabel: Maya Settings
+    groupLabel: Arnold Settings
   description: The frames to render. E.g. 1-3,8,11-15
   minLength: 1
-- name: ProjectPath
-  type: PATH
-  objectType: DIRECTORY
-  # The submitter determines the set of files by walking the scene graph.
-  dataFlow: NONE
-  userInterface:
-    control: CHOOSE_DIRECTORY
-    label: Project Path
-    groupLabel: Maya Settings
-  description: The Maya project path.
 - name: OutputFilePath
   type: PATH
   objectType: DIRECTORY
@@ -42,27 +32,27 @@ parameterDefinitions:
   userInterface:
     control: CHOOSE_DIRECTORY
     label: Output File Path
-    groupLabel: Maya Settings
+    groupLabel: Arnold Settings
   description: The render output path.
-- name: RenderSetupIncludeLights
+- name: ArnoldErrorOnLicenseFailure
   type: STRING
   userInterface:
     control: CHECK_BOX
-    label: Include All Lights
-    groupLabel: Maya Settings
-  description: Include all lights in the render.
-  default: 'true'
+    label: Error on License Failure
+    groupLabel: Arnold Settings
+  description: Whether to produce an error when there is an Arnold license failure.
+  default: "true"
   allowedValues:
-  - 'true'
-  - 'false'
+    - "true"
+    - "false"
 - name: StrictErrorChecking
   type: STRING
   userInterface:
     control: CHECK_BOX
     label: Strict Error Checking
-    groupLabel: Maya Settings
+    groupLabel: Arnold Settings
   description: Fail when errors occur.
-  default: 'false'
+  default: 'true'
   allowedValues:
   - 'true'
   - 'false'
@@ -74,22 +64,20 @@ steps:
       type: INT
       range: '{{Param.Frames}}'
   stepEnvironments:
-  - name: Maya
-    description: Runs Maya in the background.
+  - name: Arnold
+    description: Runs Arnold in the background.
     script:
       embeddedFiles:
       - name: initData
         filename: init-data.yaml
         type: TEXT
         data: |
-          scene_file: '{{Param.MayaSceneFile}}'
-          project_path: '{{Param.ProjectPath}}'
+          scene_file: '{{Param.ArnoldSceneFile}}'
           output_file_path: '{{Param.OutputFilePath}}'
-          render_setup_include_lights: {{Param.RenderSetupIncludeLights}}
-          strict_error_checking: {{Param.StrictErrorChecking}}
+          error_on_arnold_license_fail: {{Param.ArnoldErrorOnLicenseFailure}}
       actions:
         onEnter:
-          command: MayaAdaptor
+          command: arnold-openjd
           args:
           - daemon
           - start
@@ -102,7 +90,7 @@ steps:
           cancelation:
             mode: NOTIFY_THEN_TERMINATE
         onExit:
-          command: MayaAdaptor
+          command: arnold-openjd
           args:
           - daemon
           - stop
@@ -119,7 +107,7 @@ steps:
         frame: {{Task.Param.Frame}}
     actions:
       onRun:
-        command: MayaAdaptor
+        command: arnold-openjd
         args:
         - daemon
         - run
