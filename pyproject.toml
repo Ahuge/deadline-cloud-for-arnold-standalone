@@ -1,0 +1,194 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "deadline-cloud-for-arnold"
+authors = [
+  {name = "Amazon Web Services"},
+]
+dynamic = ["version"]
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.9"
+description = "The submitter and adaptor to enable arnold support for AWS Deadline Cloud"
+# https://pypi.org/classifiers/
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: MacOS",
+  "License :: OSI Approved :: Apache Software License",
+  "Intended Audience :: Developers",
+  "Intended Audience :: End Users/Desktop",
+]
+
+dependencies = [
+    "deadline == 0.48.*",
+    "openjd-adaptor-runtime >= 0.7,< 0.9",
+]
+
+[project.urls]
+Homepage = "https://github.com/aws-deadline/deadline-cloud-for-arnold-standalone"
+Source = "https://github.com/aws-deadline/deadline-cloud-for-arnold-standalone"
+
+[project.scripts]
+arnold-openjd = "deadline.arnold_adaptor.ArnoldAdaptor:main"
+# The binary name 'ArnoldAdaptor' is deprecated.
+arnoldAdaptor = "deadline.arnold_adaptor.ArnoldAdaptor:main"
+
+[tool.hatch.build]
+artifacts = [
+  "*_version.py",
+]
+include = [
+  # Include the starting job template/environment yaml files in the package
+  "*.yaml",
+]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+version_scheme = "post-release"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "_version.py"
+
+[tool.hatch.build.hooks.custom]
+path = "hatch_custom_hook.py"
+
+[tool.hatch.build.hooks.custom.copy_version_py]
+destinations = [
+  "src/deadline/arnold_adaptor",
+  "src/deadline/arnold_util",
+  "src/deadline/maya_submitter",
+]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/*",
+    "hatch_custom_hook.py",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+  "src/deadline",
+]
+
+[tool.mypy]
+check_untyped_defs = true
+show_error_codes = true
+pretty = true
+# Tell mypy that there's a namespace package at src/deadline
+namespace_packages = true
+explicit_package_bases = true
+mypy_path = "src"
+
+[[tool.mypy.overrides]]
+module = [
+  "arnold.*",
+  "PySide2.*",
+  "qtpy.*"
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["deadline_worker_agent"]
+
+[tool.black]
+line-length = 100
+
+[tool.pytest.ini_options]
+xfail_strict = true
+addopts = [
+    "--durations=5",
+    "--cov=src/deadline/arnold_adaptor",
+    "--cov=src/deadline/arnold_util",
+    "--cov=src/deadline/maya_submitter",
+    "--color=yes",
+    "--cov-report=html:build/coverage",
+    "--cov-report=xml:build/coverage/coverage.xml",
+    "--cov-report=term-missing",
+    "--numprocesses=auto",
+]
+testpaths = [ "test/unit" ]
+looponfailroots = [
+    "src",
+    "test/unit",
+]
+# looponfailroots is deprecated, this removes the deprecation from the test output
+filterwarnings = [
+    "ignore::DeprecationWarning"
+]
+
+[tool.coverage.run]
+source_pkgs = [ "deadline/arnold_adaptor", "deadline/arnold_util", "deadline/maya_submitter" ]
+branch = true
+parallel = true
+omit = [
+    "**/__main__.py",
+    "**/_version.py",
+    "*/deadline/maya_submitter/*",
+]
+
+
+[tool.coverage.paths]
+source = [
+  "src/"
+]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 72
+
+[tool.semantic_release]
+# Can be removed or set to true once we are v1
+major_on_zero = false
+tag_format = "{version}"
+
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = [
+    "build",
+    "chore",
+    "ci",
+    "docs",
+    "feat",
+    "fix",
+    "perf",
+    "style",
+    "refactor",
+    "test",
+]
+minor_tags = []
+patch_tags = [
+  "chore",
+  "feat",
+  "fix",
+  "refactor",
+]
+
+[tool.semantic_release.publish]
+upload_to_vcs_release = false
+
+[tool.semantic_release.changelog]
+template_dir = ".semantic_release"
+
+[tool.semantic_release.changelog.environment]
+trim_blocks = true
+lstrip_blocks = true
+
+[tool.semantic_release.branches.release]
+match = "(mainline|release)"
