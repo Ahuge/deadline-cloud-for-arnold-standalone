@@ -25,6 +25,7 @@ from deadline.client.util.callback_type import DeadlineCloudCallbackType
 from deadline.maya_submitter.data_classes import RenderSubmitterUISettings
 
 from deadline import arnold_util
+from deadline.arnold_util.ui import ArnoldSubmitterPluginWidget
 
 from qtpy import QtWidgets, QtCore
 
@@ -391,14 +392,7 @@ class ArnoldPlugin(DeadlineCloudCallbackType):
 
     def __init__(self):
         super(ArnoldPlugin, self).__init__()
-        self.checkbox = None
-        self.label = None
-
-        self.exportAllShadingGroups = None
-        self.expandProcedurals = None
-        self.exportFullPaths = None
-        self.lightLinking = None
-        self.shadowLinking = None
+        self.widget = None
 
     def on_ui_callback(
             self,
@@ -407,74 +401,18 @@ class ArnoldPlugin(DeadlineCloudCallbackType):
             asset_references: AssetReferences,
             host_requirements: Optional[dict[str, Any]] = None,
     ) -> UICallbackResponse:
-        widget = QtWidgets.QWidget(dialog)
-        widget.setWindowTitle("Arnold Plugin")
-        widget.setLayout(QtWidgets.QVBoxLayout())
-        widget.layout().setContentsMargins(0, 0, 0, 0)
-        widget.layout().setSpacing(0)
 
-        self._label_widget = QtWidgets.QWidget(widget)
-        self._label_widget.setLayout(QtWidgets.QHBoxLayout())
-        self._label_widget.layout().setContentsMargins(0, 0, 0, 0)
-        self._label_widget.layout().setSpacing(0)
-        self._label_widget.layout().addStretch()
-        self.label = QtWidgets.QLabel("<h1>Arnold Settings</h1>")
-        self._label_widget.layout().addWidget(self.label)
-        self._label_widget.layout().addStretch()
-
-        self.checkbox = QtWidgets.QGroupBox("Export Arnold Standalone", widget)
-        self.checkbox.setCheckable(True)
-        self.checkbox.setChecked(False)
-        self.checkbox.setLayout(QtWidgets.QGridLayout())
-        self.checkbox.setFlat(False)
-        self.checkbox.setStyleSheet("QGroupBox { font: bold; border: 1px solid silver; border-radius: 6px; margin-top: 6px; } QGroupBox::title { subcontrol-origin: margin; left: 7px; padding: 0px 5px 0px 5px; }")
-
-        self.exportAllShadingGroups = QtWidgets.QCheckBox("Export All Shading Groups", self.checkbox)
-        self.exportAllShadingGroups.setChecked(True)
-        self.exportAllShadingGroups.setToolTip("When enabled, all shading groups are exported (or only the selected ones during export selected), even if they're not assigned to any geometry in the scene. This prevents assignment of shaders to dummy objects.")
-        self.expandProcedurals = QtWidgets.QCheckBox("Expand Procedurals", self.checkbox)
-        self.expandProcedurals.setChecked(True)
-        self.expandProcedurals.setToolTip("Internally, Arnold creates shape nodes from procedural nodes (usually on demand). 'Expand procedurals' expands the nodes before doing the Ass export. Therefore when saving .ass file, you will get all of the nodes that have been created by the procedural.")
-        self.exportFullPaths = QtWidgets.QCheckBox("Export Full Paths", self.checkbox)
-        self.exportFullPaths.setChecked(True)
-        self.exportFullPaths.setToolTip("Exports the node names with the full Maya path. For example, pSphere1|pSphereShape1 will be used instead of pSphereShape1.")
-
-        self.lightLinkingLabel = QtWidgets.QLabel("Light Linking")
-        self.lightLinking = QtWidgets.QComboBox(self.checkbox)
-        self.lightLinking.addItems([self._NONE, self.LIGHT_LINKING_MAYA])
-        self.lightLinking.setCurrentIndex(self.lightLinking.findText(self.LIGHT_LINKING_MAYA))
-        self.lightLinking.setToolTip("Turn off light linking ('None') or use Maya's light links ('Maya Light Links'). Ensure that Light Linking is set to none when instancing lights. Otherwise, the instanced light will not render.")
-        self.shadowLinkingLabel = QtWidgets.QLabel("Shadow Linking")
-        self.shadowLinking = QtWidgets.QComboBox(self.checkbox)
-        self.shadowLinking.addItems([self._NONE, self.SHADOW_LINKING_FOLLOW_LIGHT, self.SHADOW_LINKING_MAYA])
-        self.shadowLinking.setCurrentIndex(self.shadowLinking.findText(self.SHADOW_LINKING_FOLLOW_LIGHT))
-        self.shadowLinking.setToolTip("Shadow linking can be set to be the same as the setting for light linking ('Follows Light Linking') or you can specify explicitly that shadow linking should be turned off ('None') or use Maya's shadow linking ('Maya Shadow Links').")
-
-        self._line = QtWidgets.QFrame(self.checkbox)
-        self._line.setFrameShape(QtWidgets.QFrame.HLine)
-        self._line.setFrameShadow(QtWidgets.QFrame.Sunken)
-
-        self.checkbox.layout().addWidget(QtWidgets.QWidget(self.checkbox), 0, 0, 1, -1)
-
-        self.checkbox.layout().addWidget(self.exportAllShadingGroups, 1, 0, 1, 2)
-        self.checkbox.layout().addWidget(self.expandProcedurals, 1, 3, 1, 2)
-        self.checkbox.layout().addWidget(self.exportFullPaths, 2, 0, 1, 2)
-        self.checkbox.layout().addWidget(self.exportFullPaths, 2, 0, 1, 2)
-
-        self.checkbox.layout().addWidget(self._line, 3, 0, 1, -1)
-
-        self.checkbox.layout().addWidget(self.lightLinkingLabel, 4, 0, 1, 1)
-        self.checkbox.layout().addWidget(self.lightLinking, 4, 1, 1, -1)
-        self.checkbox.layout().addWidget(self.shadowLinkingLabel, 5, 0, 1, 1)
-        self.checkbox.layout().addWidget(self.shadowLinking, 5, 1, 1, -1)
-
-        widget.layout().addWidget(self._label_widget)
-        widget.layout().addWidget(self.checkbox)
+        self.widget = ArnoldSubmitterPluginWidget(
+            parent=dialog,
+            settings=settings,
+            scene_file=Scene.name()
+        )
+        self.settings = self.widget.settings
         return UICallbackResponse(
             settings=settings,
             asset_references=asset_references,
             host_requirements=host_requirements,
-            job_specific_ui=widget,
+            job_specific_ui=self.widget,
         )
 
     def on_create_job_bundle_callback(
@@ -487,7 +425,7 @@ class ArnoldPlugin(DeadlineCloudCallbackType):
         host_requirements: Optional[dict[str, Any]] = None,
         purpose: JobBundlePurpose = JobBundlePurpose.SUBMISSION,
     ) -> None:
-        if not self.checkbox.isChecked():
+        if not self.widget.checkbox.isChecked():
             _LOG.info("Arnold Export checkbox is not checked. Nothing to do...")
             return
 
