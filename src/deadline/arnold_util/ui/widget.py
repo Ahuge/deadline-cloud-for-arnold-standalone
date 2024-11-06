@@ -69,6 +69,9 @@ QGroupBox::title {
 
         self.build_ui()
 
+    def get_settings(self):
+        return self.settings.plugins.arnold_plugin
+
     @property
     def checkbox(self):
         return self._checkbox_groupbox
@@ -101,6 +104,7 @@ QGroupBox::title {
         self._checkbox_groupbox = QtWidgets.QGroupBox("Export Arnold Standalone", self)
         self._checkbox_groupbox.setCheckable(True)
         self._checkbox_groupbox.setChecked(False)
+        self._checkbox_groupbox.clicked.connect(self._handle_checkbox_groupbox_clicked)
         self._checkbox_groupbox.setLayout(QtWidgets.QGridLayout())
         self._checkbox_groupbox.setFlat(False)
         self._checkbox_groupbox.setStyleSheet(self._CHECKBOX_GROUPBOX_STYLESHEET)
@@ -135,18 +139,21 @@ QGroupBox::title {
     def _build_shading_groups_checkbox(self):
         self._export_all_shading_groups_checkbox = QtWidgets.QCheckBox("Export All Shading Groups", self._checkbox_groupbox)
         self._export_all_shading_groups_checkbox.setChecked(True)
+        self._export_all_shading_groups_checkbox.clicked.connect(self._handle_export_all_shading_groups_clicked)
         self._export_all_shading_groups_checkbox.setToolTip(self._EXPORT_ALL_SHADING_GROUPS_TOOLTIP)
         return self._export_all_shading_groups_checkbox
 
     def _build_expand_procedurals_checkbox(self):
         self._expand_procedurals_checkbox = QtWidgets.QCheckBox("Expand Procedurals", self._checkbox_groupbox)
         self._expand_procedurals_checkbox.setChecked(True)
+        self._expand_procedurals_checkbox.clicked.connect(self._handle_expand_procedurals_clicked)
         self._expand_procedurals_checkbox.setToolTip(self._EXPAND_PROCEDURALS_TOOLTIP)
         return self._expand_procedurals_checkbox
 
     def _build_export_full_paths_checkbox(self):
         self._export_full_paths_checkbox = QtWidgets.QCheckBox("Export Full Paths", self._checkbox_groupbox)
         self._export_full_paths_checkbox.setChecked(True)
+        self._export_full_paths_checkbox.clicked.connect(self._handle_export_full_paths_clicked)
         self._export_full_paths_checkbox.setToolTip(self._EXPORT_FULL_PATHS_TOOLTIP)
         return self._export_full_paths_checkbox
 
@@ -155,6 +162,7 @@ QGroupBox::title {
         self._light_linking_combobox = QtWidgets.QComboBox(self._checkbox_groupbox)
         self._light_linking_combobox.addItems([self._NONE, self.LIGHT_LINKING_MAYA])
         self._light_linking_combobox.setCurrentIndex(self._light_linking_combobox.findText(self.LIGHT_LINKING_MAYA))
+        self._light_linking_combobox.currentTextChanged.connect(self._handle_light_linking_currentTextChanged)
         self._light_linking_combobox.setToolTip(self._LIGHT_LINKING_TOOLTIP)
         return self._light_Linking_label, self._light_linking_combobox
 
@@ -163,5 +171,24 @@ QGroupBox::title {
         self._shadow_linking_combobox = QtWidgets.QComboBox(self._checkbox_groupbox)
         self._shadow_linking_combobox.addItems([self._NONE, self.SHADOW_LINKING_FOLLOW_LIGHT, self.SHADOW_LINKING_MAYA])
         self._shadow_linking_combobox.setCurrentIndex(self._shadow_linking_combobox.findText(self.SHADOW_LINKING_FOLLOW_LIGHT))
+        self._shadow_linking_combobox.currentTextChanged.connect(self._handle_shadow_linking_currentTextChanged)
         self._shadow_linking_combobox.setToolTip(self._SHADOW_LINKING_TOOLTIP)
         return self._shadow_linking_label, self._shadow_linking_combobox
+
+    def _handle_checkbox_groupbox_clicked(self, checked: bool):
+        self.get_settings().arnold_export = checked
+
+    def _handle_export_all_shading_groups_clicked(self, checked: bool):
+        self.get_settings().export_all_shading_groups = checked
+
+    def _handle_expand_procedurals_clicked(self, checked: bool):
+        self.get_settings().expand_procedurals = checked
+
+    def _handle_export_full_paths_clicked(self, checked: bool):
+        self.get_settings().export_full_paths = checked
+
+    def _handle_light_linking_currentTextChanged(self, text: str):
+        self.get_settings().light_linking = text
+
+    def _handle_shadow_linking_currentTextChanged(self, text: str):
+        self.get_settings().shadow_linking = text

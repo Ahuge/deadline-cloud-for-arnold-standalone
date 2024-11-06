@@ -425,7 +425,7 @@ class ArnoldPlugin(DeadlineCloudCallbackType):
         host_requirements: Optional[dict[str, Any]] = None,
         purpose: JobBundlePurpose = JobBundlePurpose.SUBMISSION,
     ) -> None:
-        if not self.widget.checkbox.isChecked():
+        if not settings.plugins.arnold_plugin:
             _LOG.info("Arnold Export checkbox is not checked. Nothing to do...")
             return
 
@@ -572,18 +572,23 @@ class ArnoldPlugin(DeadlineCloudCallbackType):
             )
 
         shadowLinks = 0
-        if self.shadowLinking.getValue() == self.SHADOW_LINKING_FOLLOW_LIGHT:
+        if settings.plugins.shadow_linking == self.SHADOW_LINKING_FOLLOW_LIGHT:
             shadowLinks = 1
-        elif self.shadowLinking.getValue() == self.SHADOW_LINKING_MAYA:
+        elif settings.plugins.shadow_linking == self.SHADOW_LINKING_MAYA:
             shadowLinks = 2
+
+        lightLinks = 0
+        if settings.plugins.light_linking == self.LIGHT_LINKING_MAYA:
+            lightLinks = 1
+
         cmds.arnoldExportAss(
             filename=arnold_ass_path,
-            exportAllShadingGroups=self.exportAllShadingGroups.isChecked(),
+            exportAllShadingGroups=settings.plugins.export_all_shading_groups,
             mask=14591,
-            lightLinks=self.lightLinking.getValue() == self.LIGHT_LINKING_MAYA,
+            lightLinks=lightLinks,
             shadowLinks=shadowLinks,
-            expandProdcedurals=self.expandProcedurals.isChecked(),
-            fullPath=self.exportFullPaths.isChecked(),
+            expandProdcedurals=settings.plugins.expand_prodcedurals,
+            fullPath=settings.plugins.export_full_paths,
             # cam="perspShape"
         )
 
